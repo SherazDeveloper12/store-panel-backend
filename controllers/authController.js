@@ -1,7 +1,9 @@
 const authModel = require('../models/authmodel');
+
+const Otp = require('../models/otpmodel');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
-
+const {sendOtpEmail} = require('../services/emailSender');
 var jwt = require('jsonwebtoken');
  const RESEND_COOLDOWN_SECONDS = 60;
 const getAllUsers = async (req, res) => {
@@ -35,7 +37,7 @@ const registerUser = async (req, res) => {
         newUser.storeID =  newUser._id.toString(); // Generate storeID from last 6 characters of _id
        console.log("new user",newUser);
         await newUser.save();
-        res.status(200).json({ status: 'success', message: 'User registered successfully. Please verify your email.', user: { _id: newUser._id, userName: newUser.userName, email: newUser.email },  });
+        res.status(200).json({ status: 'success', message: 'User registered successfully. Please verify your email.', user: { _id: newUser._id, userName: newUser.userName, email: newUser.email, storeName: newUser.storeName, storeID: newUser.storeID },  });
 
     } catch (error) {
         console.error(error);
@@ -46,13 +48,15 @@ const registerUser = async (req, res) => {
 const sendOtp = async (req, res) => {
    
   try {
+    console.log("sendOtp request body:", req.body.email);
     const { email } = req.body;
     if (!email) {
       return res.status(400).json({ success: false, message: 'Email is required' });
     }
 
-    const user = await User.findOne({ email });
+    const user = await authModel.findOne({ email });
     if (!user) {
+        console.error(`User with email ${email} not found`);
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
@@ -83,14 +87,8 @@ const sendOtp = async (req, res) => {
       otp,
       lastSentAt: new Date()
     });
-
-    await sgMail.send({
-      to: email,
-      from: process.env.SENDGRID_FROM_EMAIL,
-      subject: 'Your verification code',
-      text: `Your OTP is ${otp}. It expires in 5 minutes.`,
-      html: `<p>Your OTP is <b>${otp}</b>. It expires in 5 minutes.</p>`
-    });
+ console.log(`Generated OTP for user ${user.email}: ${otp}`);
+    await sendOtpEmail(email, otp)
 
     return res.status(200).json({ success: true, message: 'OTP sent to your email' });
 

@@ -5,7 +5,7 @@ const { registerUser, loginUser, getUserProfile, updateUserProfile , getAllUsers
 // Route to register a new user
 authRouter.post('/register', registerUser);
 // Route to send an OTP for verification
-authRouter.post('/sendOtp ', sendOtp )
+authRouter.post('/sendOtp', sendOtp )
 // Route to login a user
 authRouter.post('/login', loginUser);
 // Route to get user profile
