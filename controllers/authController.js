@@ -153,6 +153,30 @@ const verifyOtp = async (req, res) => {
     await Otp.deleteOne({ userId: user._id, otp });
     const Verfieduser = await authModel.findById(user._id);
     const JWTToken = jwt.sign({ _id: Verfieduser._id, email: Verfieduser.email, role: Verfieduser.role, storeName: Verfieduser.storeName, storeID: Verfieduser.storeID }, process.env.JWT_SECRET);
+    const subject = 'Welcome to Store Pannel';
+    const message = `
+        <div style="margin:0;padding:0;background-color:#f4f4f4;font-family:Arial, Helvetica, sans-serif;">
+          <div style="max-width:580px;margin:24px auto;padding:0 8px;">
+            <div style="background:#ffffff;border:1px solid #d9d9d9;border-radius:14px;overflow:hidden;box-shadow:0 3px 12px rgba(0,0,0,0.14);">
+              <div style="background:#e60000;padding:34px 24px;text-align:center;">
+                <div style="color:#ffffff;font-size:30px;line-height:1.2;font-weight:700;">Store Pannel</div>
+              </div>
+              <div style="padding:56px 28px 36px;text-align:center;color:#111111;">
+                <p style="margin:0 0 14px;font-size:20px;line-height:1.6;">
+                  Welcome to our Store Pannel!
+                </p>
+                <p style="margin:0;font-size:18px;line-height:1.6;">
+                  We're excited to have you on board. Your account has been successfully verified, and you can now access all the features of our platform.
+                </p>
+                <p style="margin:0;font-size:18px;line-height:1.6;">
+                  If you have any questions or need assistance, feel free to reach out to our support team.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    await sendEmail(email,  subject, message)
     return res.status(200).json({ success: true, message: 'OTP verified successfully', user: Verfieduser, token: JWTToken, isAuthenticated: Verfieduser.isAuthenticated });
   } catch (error) {
     console.error('verifyOtp error:', error);
