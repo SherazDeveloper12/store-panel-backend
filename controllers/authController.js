@@ -3,7 +3,7 @@ const authModel = require('../models/authmodel');
 const Otp = require('../models/otpmodel');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
-const { sendOtpEmail } = require('../services/emailSender');
+const { sendOtpEmail, sendEmail } = require('../services/emailSender');
 var jwt = require('jsonwebtoken');
 const RESEND_COOLDOWN_SECONDS = 60;
 const getAllUsers = async (req, res) => {
@@ -37,6 +37,20 @@ const registerUser = async (req, res) => {
     newUser.storeID = newUser._id.toString(); // Generate storeID from last 6 characters of _id
     console.log("new user", newUser);
     await newUser.save();
+    const JWTToken = jwt.sign({
+      _id: newUser._id,
+      email: newUser.email,
+      role: newUser.role,
+      storeName: newUser.storeName,
+      storeID: newUser.storeID,
+      isAuthenticated: newUser.isAuthenticated
+    }, process.env.JWT_SECRET);
+    res.cookie('token', JWTToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
     res.status(200).json({ status: 'success', message: 'User registered successfully. Please verify your email.', user: { _id: newUser._id, userName: newUser.userName, email: newUser.email, storeName: newUser.storeName, storeID: newUser.storeID }, });
 
   } catch (error) {
@@ -135,7 +149,7 @@ const verifyOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid OTP or OTP has been Expired' });
     }
     // Check if OTP is expired
-    
+
     const MAX_ATTEMPTS = 5;
     const existingOtpWithAttempts = await Otp.findOne({ userId: user._id, otp });
     if (existingOtpWithAttempts.attempts >= MAX_ATTEMPTS) {
@@ -152,7 +166,14 @@ const verifyOtp = async (req, res) => {
     // Delete the used OTP
     await Otp.deleteOne({ userId: user._id, otp });
     const Verfieduser = await authModel.findById(user._id);
-    const JWTToken = jwt.sign({ _id: Verfieduser._id, email: Verfieduser.email, role: Verfieduser.role, storeName: Verfieduser.storeName, storeID: Verfieduser.storeID }, process.env.JWT_SECRET);
+    const JWTToken = jwt.sign({
+      _id: Verfieduser._id,
+      email: Verfieduser.email,
+      role: Verfieduser.role,
+      storeName: Verfieduser.storeName,
+      storeID: Verfieduser.storeID,
+      isAuthenticated: Verfieduser.isAuthenticated
+    }, process.env.JWT_SECRET);
     const subject = 'Welcome to Store Pannel';
     const message = `
         <div style="margin:0;padding:0;background-color:#f4f4f4;font-family:Arial, Helvetica, sans-serif;">
@@ -176,7 +197,14 @@ const verifyOtp = async (req, res) => {
           </div>
         </div>
       `;
-    await sendEmail(email,  subject, message)
+    await sendEmail(email, subject, message)
+    
+    res.cookie('token', JWTToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    })
     return res.status(200).json({ success: true, message: 'OTP verified successfully', user: Verfieduser, token: JWTToken, isAuthenticated: Verfieduser.isAuthenticated });
   } catch (error) {
     console.error('verifyOtp error:', error);
@@ -198,6 +226,16 @@ const loginUser = async (req, res) => {
     res.status(200).json({ status: 'success', message: 'Login successful', user: { _id: user._id, username: user.username, email: user.email }, token });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Error logging in', error: error.message });
+  }
+}
+const logoutUser = async (req, res) => {
+  try {
+    res.clearCookie('token')
+   return res.status(200).json({ status: 'success', message: 'Logout successful' });
+    
+  } catch (error) {
+  return      res.status(500).json({ status: 'error', message: 'Error logging in', error: error.message });
+
   }
 }
 const getUserProfile = async (req, res) => {
@@ -238,6 +276,7 @@ module.exports = {
   sendOtp,
   verifyOtp,
   loginUser,
+  logoutUser,
   getUserProfile,
   updateUserProfile,
   getAllUsers
