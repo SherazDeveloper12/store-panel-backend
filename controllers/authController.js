@@ -48,7 +48,7 @@ const registerUser = async (req, res) => {
     res.cookie('token', JWTToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite:  process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
     res.status(200).json({ status: 'success', message: 'User registered successfully. Please verify your email.', user: { _id: newUser._id, userName: newUser.userName, email: newUser.email, storeName: newUser.storeName, storeID: newUser.storeID }, });
@@ -140,6 +140,7 @@ const sendOtp = async (req, res) => {
 const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
+    console.log(`Verifying OTP for email: ${email}, OTP: ${otp}`);
     const user = await authModel.findOne({ email });
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
@@ -202,7 +203,7 @@ const verifyOtp = async (req, res) => {
     res.cookie('token', JWTToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite:  process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     })
     return res.status(200).json({ success: true, message: 'OTP verified successfully', user: Verfieduser, token: JWTToken, isAuthenticated: Verfieduser.isAuthenticated });
@@ -222,8 +223,23 @@ const loginUser = async (req, res) => {
     if (user.password !== password) {
       return res.status(401).json({ status: 'error', message: 'Wrong password' });
     }
-    const token = jwt.sign({ _id: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET,);
-    res.status(200).json({ status: 'success', message: 'Login successful', user: { _id: user._id, username: user.username, email: user.email }, token });
+    const userdata = {
+      _id: user._id,
+      email: user.email,
+      role: user.role,
+      storeName: user.storeName,
+      storeID: user.storeID,
+      isAuthenticated: user.isAuthenticated
+    } 
+    const token = jwt.sign(userdata, process.env.JWT_SECRET,);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite:  process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+    
+    res.status(200).json({ status: 'success', message: 'Login successful', user: userdata,  });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Error logging in', error: error.message });
   }
@@ -240,7 +256,7 @@ const logoutUser = async (req, res) => {
 }
 const getUserProfile = async (req, res) => {
   try {
-    token = req.headers.authorization;
+    token = req.cookies.token;
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded._id;
 

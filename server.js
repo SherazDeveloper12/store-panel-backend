@@ -8,6 +8,7 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const authRouter = require('./routes/authRoutes');
+const productRouter = require('./routes/productRoutes');
 const dotenv = require('dotenv');
 const main = require('./config/db');
 dotenv.config();
@@ -33,7 +34,7 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/auth', authRouter);
-
+app.use('/products', productRouter);
  server.listen(port, ()=>{
         console.log(`Server is running on port ${port}`);
     })
