@@ -15,6 +15,8 @@ const productSchema = new mongoose.Schema({
     condition: { type: String, required: true },
     inStock: { type: Boolean, default: true },
     quantity: { type: Number, default: 0 },
+    discount: { type: Number, default: 0 },
+    storeID: { type: mongoose.Schema.Types.ObjectId, ref: 'Store', required: true }
 
 });
 productSchema.set('collection', 'products');
