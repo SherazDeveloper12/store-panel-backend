@@ -64,6 +64,10 @@ const addCategory = async (req, res) => {
         res.status(500).json({ message: error.message, error: error });
     }
 };
+const deleteCategory = async (req, res) => {}
+const updateCategory = async (req, res) => {}
+const updateBrand = async (req, res) => {}
+const deleteBrand = async (req, res) => {}
 const addBrand = async (req, res) => {
     try {
         console.log('add brand is running:', req.body);
@@ -102,4 +106,4 @@ const addBrand = async (req, res) => {
 };
 
 
-module.exports = { fetchSettings, addCategory, addBrand };
+module.exports = { fetchSettings, addCategory, addBrand , deleteCategory, updateCategory, updateBrand, deleteBrand};

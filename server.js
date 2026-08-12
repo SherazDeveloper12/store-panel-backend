@@ -9,7 +9,8 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const authRouter = require('./routes/authRoutes');
 const productRouter = require('./routes/productRoutes');
-const settingsRouter = require('./routes/settingRoutes');
+const categoryRouter = require('./routes/categoryRoutes');
+const brandRouter = require('./routes/brandRoutes');
 const dotenv = require('dotenv');
 const main = require('./config/db');
 dotenv.config();
@@ -36,7 +37,8 @@ app.get('/', (req, res) => {
 // Routes
 app.use('/auth', authRouter);
 app.use('/products', productRouter);
-app.use('/settings', settingsRouter);
+app.use('/categories', categoryRouter);
+app.use('/brands', brandRouter);
  server.listen(port, ()=>{
         console.log(`Server is running on port ${port}`);
     })
