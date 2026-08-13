@@ -1,10 +1,10 @@
 const express = require('express');
 const orderRouter = express.Router();
 const { createOrder,
-     getOrderById,
-       getOrdersByUserId, 
-      updateOrderStatus, 
-getAllOrders    } = require('../controllers/orderController');
+  getOrderById,
+  getOrdersByUserId,
+  updateOrderStatus,
+  getAllOrders } = require('../controllers/orderController');
 
 // Route to create a new order
 orderRouter.post('/create', createOrder);

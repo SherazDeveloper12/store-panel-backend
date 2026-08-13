@@ -28,7 +28,8 @@ const orderSchema = new mongoose.Schema({
     status: { type: String, enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'], default: 'Pending' },
     deliveryCharges: { type: Number, required: true },
     payableAmount: { type: Number, required: true },
-    orderDate: { type: Date, default: Date.now }
+    orderDate: { type: Date, default: Date.now },
+    storeID: { type: String, ref: 'Store', required: true },
 },
     { timestamps: true });
 orderSchema.set('collection', 'orders');

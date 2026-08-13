@@ -11,13 +11,14 @@ const authRouter = require('./routes/authRoutes');
 const productRouter = require('./routes/productRoutes');
 const categoryRouter = require('./routes/categoryRoutes');
 const brandRouter = require('./routes/brandRoutes');
+const orderRouter = require('./routes/orderRoutes');
 const dotenv = require('dotenv');
 const main = require('./config/db');
 dotenv.config();
 
 app.use(cors(
     {
-        origin : process.env.FRONTEND_URL,
+        origin : ['http://localhost:3000', 'https://genz-fragrance.vercel.app', 'http://localhost:3001'],
         credentials : true,
     }
 ));
@@ -39,6 +40,7 @@ app.use('/auth', authRouter);
 app.use('/products', productRouter);
 app.use('/categories', categoryRouter);
 app.use('/brands', brandRouter);
+app.use('/orders', orderRouter);
  server.listen(port, ()=>{
         console.log(`Server is running on port ${port}`);
     })

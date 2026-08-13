@@ -61,7 +61,7 @@ const getAllProducts = async (req, res) => {
             return res.status(400).json({ message: 'storeID query parameter is required' });
         }
         const products = await productModel.find({ storeID });
-        console.log('Products fetched successfully:', products);
+      
         res.status(200).json(products);
 
     } catch (error) {

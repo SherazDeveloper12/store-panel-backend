@@ -20,34 +20,35 @@ const createOrder = async (req, res) => {
             status: orderdetails.status,
             deliveryCharges: deliveryCharges,
             payableAmount: totalProductsCost + deliveryCharges,
-            orderDate: orderdetails.orderDate
+            orderDate: orderdetails.orderDate,
+            storeID: orderdetails.storeID,
         }
 
         const orderCreated = new orderModel(order);
         const savedOrder = await orderCreated.save();
-        const adminNotification = {
-            recipientid: "69843421d30a0ace506d9172",
-            message: `New Order Placed by ${orderdetails.shippingAddress.fullName}`,
-            type: 'Order Creation',
-            data: {
-                orderId: savedOrder._id,
-            }
-        }
-        const adminNotificationCreated = new notificationModel(adminNotification);
-        await adminNotificationCreated.save();
-        global.io.to(global.userSockets.get('69843421d30a0ace506d9172')).emit('newOrderCreated', { notification: adminNotificationCreated, order: savedOrder });
-        const notification = {
-            recipientid: orderdetails.userid,
-            message: `Your order has been placed successfully. Order ID: ${savedOrder._id}`,
-            type: 'Order Creation',
-            data: {
-                orderId: savedOrder._id,
-            }
-        }
-        const notificationCreated = new notificationModel(notification);
-        await notificationCreated.save();
-        global.io.to(global.userSockets.get(orderdetails.userid)).emit('newOrderCreated', { notification: notificationCreated, order: savedOrder });
-        res.status(200).json(savedOrder);
+        // const adminNotification = {
+        //     recipientid: "69843421d30a0ace506d9172",
+        //     message: `New Order Placed by ${orderdetails.shippingAddress.fullName}`,
+        //     type: 'Order Creation',
+        //     data: {
+        //         orderId: savedOrder._id,
+        //     }
+        // }
+        // const adminNotificationCreated = new notificationModel(adminNotification);
+        // await adminNotificationCreated.save();
+        // global.io.to(global.userSockets.get('69843421d30a0ace506d9172')).emit('newOrderCreated', { notification: adminNotificationCreated, order: savedOrder });
+        // const notification = {
+        //     recipientid: orderdetails.userid,
+        //     message: `Your order has been placed successfully. Order ID: ${savedOrder._id}`,
+        //     type: 'Order Creation',
+        //     data: {
+        //         orderId: savedOrder._id,
+        //     }
+        // }
+        // const notificationCreated = new notificationModel(notification);
+        // await notificationCreated.save();
+        // global.io.to(global.userSockets.get(orderdetails.userid)).emit('newOrderCreated', { notification: notificationCreated, order: savedOrder });
+        res.status(200).json({ status: "Success", order: savedOrder, message: "Order created successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({
