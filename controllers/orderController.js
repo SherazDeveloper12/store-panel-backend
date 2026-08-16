@@ -1,7 +1,7 @@
 const notificationModel = require('../models/notifcationmodel');
 const orderModel = require('../models/ordermodel');
 const productModel = require('../models/productmodel');
-
+var jwt = require('jsonwebtoken');
 const createOrder = async (req, res) => {
     try {
         const orderdetails = req.body;
@@ -74,9 +74,18 @@ const getOrderById = async (req, res) => {
     }
 }
 const getAllOrders = async (req, res) => {
+    const token = req.cookies.token;
+    if (!token) {
+        return res.status(401).json({ message: 'Unauthorized', success: false });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded || !decoded.storeID) {
+        return res.status(401).json({ message: 'Unauthorized', success: false });
+    }
+    const storeID = decoded.storeID;
     try {
-        const orders = await orderModel.find();
-        res.status(200).json(orders);
+        const orders = await orderModel.find({ storeID: storeID });
+        res.status(200).json({ success: true, message: "Orders fetched successfully", orders });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to fetch orders' });
@@ -87,15 +96,17 @@ const updateOrderStatus = async (req, res) => {
     try {
 
         const orderId = req.params.id;
+        console.log("Updating order status for order ID:", orderId);
         const { status } = req.body;
         const order = await orderModel.findById(orderId);
+        
         if (!order) {
             return res.status(404).json({ error: 'Order not found' });
         }
         order.status = status;
         const updatedOrder = await order.save();
-        const usersocketid = global.userSockets.get(order.userId);
-        global.io.to(usersocketid).emit('orderStatusUpdated', { updatedOrder });
+        // const usersocketid = global.userSockets.get(order.userId);
+        // global.io.to(usersocketid).emit('orderStatusUpdated', { updatedOrder });
         res.status(200).json(updatedOrder);
     } catch (error) {
         console.error(error);

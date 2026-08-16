@@ -25,7 +25,7 @@ const orderSchema = new mongoose.Schema({
     phoneNumber: { type: String, required: true },
     email: { type: String, required: true },
     paymentMethod: { type: String, enum: ['COD', 'Pay Now', 'PayPal'], default: 'COD' },
-    status: { type: String, enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'], default: 'Pending' },
+    status: { type: String, enum: ['Pending', 'Processing', 'Out for Delivery', 'Delivered', 'Cancelled'], default: 'Pending' },
     deliveryCharges: { type: Number, required: true },
     payableAmount: { type: Number, required: true },
     orderDate: { type: Date, default: Date.now },
