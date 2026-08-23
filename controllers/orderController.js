@@ -1,6 +1,8 @@
 const notificationModel = require('../models/notifcationmodel');
 const orderModel = require('../models/ordermodel');
 const productModel = require('../models/productmodel');
+const authModel = require('../models/authmodel');
+const { sendEmail } = require('../services/emailSender');
 var jwt = require('jsonwebtoken');
 const createOrder = async (req, res) => {
     try {
@@ -26,6 +28,12 @@ const createOrder = async (req, res) => {
 
         const orderCreated = new orderModel(order);
         const savedOrder = await orderCreated.save();
+        const storeOwnerEmail =  await authModel.findById(orderdetails.storeID).select('email');
+        console.log("Store Owner Email:", storeOwnerEmail.email);
+        const emailSubject = 'New Order Placed';
+        const emailBody = `A new order has been placed by ${orderdetails.shippingAddress.fullName}. Order ID: ${savedOrder._id}. Please check your dashboard for more details.`;
+      
+        await sendEmail(storeOwnerEmail.email, emailSubject, emailBody);
         // const adminNotification = {
         //     recipientid: "69843421d30a0ace506d9172",
         //     message: `New Order Placed by ${orderdetails.shippingAddress.fullName}`,
