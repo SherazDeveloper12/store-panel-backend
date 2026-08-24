@@ -12,6 +12,7 @@ const productRouter = require('./routes/productRoutes');
 const categoryRouter = require('./routes/categoryRoutes');
 const brandRouter = require('./routes/brandRoutes');
 const orderRouter = require('./routes/orderRoutes');
+const couponRouter = require('./routes/couponRoutes');
 const dotenv = require('dotenv');
 const main = require('./config/db');
 dotenv.config();
@@ -41,6 +42,8 @@ app.use('/products', productRouter);
 app.use('/categories', categoryRouter);
 app.use('/brands', brandRouter);
 app.use('/orders', orderRouter);
+app.use('/coupons', couponRouter);
+
  server.listen(port, ()=>{
         console.log(`Server is running on port ${port}`);
     })
