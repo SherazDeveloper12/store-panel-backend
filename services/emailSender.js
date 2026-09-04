@@ -45,3 +45,29 @@ exports.sendEmail = async (toEmail, subject, message) => {
     }
   );
 };
+
+exports.sendEmailtoCustomer = async (storeName, toEmail, replyTo, subject, message) => {
+   
+ const response = await axios.post(
+    'https://api.brevo.com/v3/smtp/email',
+    {
+      sender: {
+        email: process.env.BREVO_FROM_EMAIL,
+        name: storeName
+      },
+      to: [{ email: toEmail }],
+      replyTo: { email: replyTo },
+      subject: subject,
+      htmlContent: message,
+    },
+    {
+      headers: {
+        'api-key': process.env.BREVO_API_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    }
+  )
+  return response.data
+  
+};
