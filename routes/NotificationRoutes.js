@@ -1,5 +1,6 @@
 const express = require('express');
 const notificationRouter = express.Router();
+const verifyToken = require('../middlewares/verifytoken');
 const { 
     FetchNotifications,
     // createNotification, 
@@ -10,7 +11,7 @@ const {
 // Route to create a new notification
 // notificationRouter.post('/create', createNotification);
 // Route to get notifications by user ID
-notificationRouter.get('/:userId', FetchNotifications);
+notificationRouter.get('/',verifyToken, FetchNotifications);
 // Route to mark a notification as read
-notificationRouter.put('/mark-notifications-as-read/', MarkAsRead);
+notificationRouter.put('/mark-notifications-as-read/',verifyToken, MarkAsRead);
 module.exports = notificationRouter;
