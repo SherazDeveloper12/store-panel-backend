@@ -15,7 +15,7 @@ authRouter.post('/logout', logoutUser);
 // Route to get user profile
 authRouter.get('/profile', verifyToken, getUserProfile);
 // Route to update user profile
-authRouter.put('/update/:id', verifyToken, updateUserProfile);
+authRouter.put('/update', verifyToken, updateUserProfile);
 // Route to get all users (admin only)
 authRouter.get('/users', verifyToken, getAllUsers); 
 module.exports = authRouter;

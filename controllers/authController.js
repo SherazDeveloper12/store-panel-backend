@@ -1,5 +1,5 @@
 const authModel = require('../models/authmodel');
-
+const notificationModel = require('../models/notifcationmodel');
 const Otp = require('../models/otpmodel');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
@@ -48,7 +48,7 @@ const registerUser = async (req, res) => {
     res.cookie('token', JWTToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite:  process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
     res.status(200).json({ status: 'success', message: 'User registered successfully. Please verify your email.', user: { _id: newUser._id, userName: newUser.userName, email: newUser.email, storeName: newUser.storeName, storeID: newUser.storeID }, });
@@ -75,7 +75,7 @@ const sendOtp = async (req, res) => {
     }
 
     if (user.isAuthenticated) {
-      return res.status(400).json({ success: false, message: 'User already verified' });
+      return res.status(412).json({ success: false, message: 'User already verified' });
     }
 
     // Check cooldown — prevent spamming resend
@@ -167,6 +167,15 @@ const verifyOtp = async (req, res) => {
     // Delete the used OTP
     await Otp.deleteOne({ userId: user._id, otp });
     const Verfieduser = await authModel.findById(user._id);
+    const Notifcation = {
+      recipientid: Verfieduser._id,
+      message: `Welcome to Store Pannel! Your account has been verified successfully.`,
+      type: 'General',
+      data: {},
+      storeID: Verfieduser.storeID
+    };
+    const notificationCreated = new notificationModel(Notifcation);
+    await notificationCreated.save();
     const JWTToken = jwt.sign({
       _id: Verfieduser._id,
       email: Verfieduser.email,
@@ -199,11 +208,11 @@ const verifyOtp = async (req, res) => {
         </div>
       `;
     await sendEmail(email, subject, message)
-    
+
     res.cookie('token', JWTToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite:  process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     })
     return res.status(200).json({ success: true, message: 'OTP verified successfully', user: Verfieduser, token: JWTToken, isAuthenticated: Verfieduser.isAuthenticated });
@@ -230,16 +239,16 @@ const loginUser = async (req, res) => {
       storeName: user.storeName,
       storeID: user.storeID,
       isAuthenticated: user.isAuthenticated
-    } 
+    }
     const token = jwt.sign(userdata, process.env.JWT_SECRET,);
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite:  process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
-    
-    res.status(200).json({ status: 'success', message: 'Login successful', user: userdata,  });
+
+    res.status(200).json({ status: 'success', message: 'Login successful', user: userdata, });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Error logging in', error: error.message });
   }
@@ -247,10 +256,10 @@ const loginUser = async (req, res) => {
 const logoutUser = async (req, res) => {
   try {
     res.clearCookie('token')
-   return res.status(200).json({ status: 'success', message: 'Logout successful' });
-    
+    return res.status(200).json({ status: 'success', message: 'Logout successful' });
+
   } catch (error) {
-  return      res.status(500).json({ status: 'error', message: 'Error logging in', error: error.message });
+    return res.status(500).json({ status: 'error', message: 'Error logging in', error: error.message });
 
   }
 }
@@ -272,18 +281,27 @@ const getUserProfile = async (req, res) => {
 }
 const updateUserProfile = async (req, res) => {
   try {
-    const userId = req.params.id;
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ message: 'Unauthorized', success: false });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Decoded token:", decoded);
+    if (!decoded || !decoded.storeID) {
+      return res.status(401).json({ message: 'Unauthorized', success: false });
+    }
+    const userId = decoded._id;
     const updates = req.body;
     const userToBeUpdate = await authModel.findById(userId);
     if (!userToBeUpdate) {
-      return res.status(404).json({ status: 'error', message: 'User not found' });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
     const updatingUser = await userToBeUpdate.set(updates);
     const updatedUser = await updatingUser.save();
     console.log("Updated User:", updatedUser);
-    res.status(200).json({ status: 'success', message: 'User profile updated successfully', user: updatedUser });
+    res.status(200).json({ success: true, message: 'User profile updated successfully', user: updatedUser });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Error updating user profile', error: error.message });
+    res.status(500).json({ success: false, message: 'Error updating user profile', error: error.message });
   }
 }
 
