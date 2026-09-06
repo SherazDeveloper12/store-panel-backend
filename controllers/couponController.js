@@ -92,7 +92,7 @@ const getAllcoupons = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
-
+const validateCoupon = async (req, res) => {}
 const getcouponById = async (req, res) => {
 }
 module.exports = { createcoupon, updatecoupon, deletecoupon, getAllcoupons, getcouponById };

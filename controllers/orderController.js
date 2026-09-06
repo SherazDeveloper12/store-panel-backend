@@ -3,6 +3,7 @@ const orderModel = require('../models/ordermodel');
 const productModel = require('../models/productmodel');
 const authModel = require('../models/authmodel');
 const { sendEmail } = require('../services/emailSender');
+const customermodel = require('../models/customermodel');
 var jwt = require('jsonwebtoken');
 const createOrder = async (req, res) => {
     try {
@@ -12,7 +13,7 @@ const createOrder = async (req, res) => {
         const deliveryCharges = 200;
         const order = {
             username: orderdetails.username,
-            userId: orderdetails.userid,
+            customerId: orderdetails.userid,
             items: orderdetails.items,
             shippingAddress: orderdetails.shippingAddress,
             billingAddress: orderdetails.billingAddress,
@@ -28,6 +29,94 @@ const createOrder = async (req, res) => {
 
         const orderCreated = new orderModel(order);
         const savedOrder = await orderCreated.save();
+        const storeOwner = await authModel.findById(orderdetails.storeID);
+        const notification = {
+            recipientid: storeOwner._id,
+            message: `New order has been placed successfully. Order ID: ${savedOrder._id}`,
+            type: 'Order',
+            data: {
+                orderId: savedOrder._id,
+            },
+            storeID: orderdetails.storeID
+        }
+        const notificationCreated = new notificationModel(notification);
+        await notificationCreated.save();
+        const orders = await orderModel.find({ storeID: orderdetails.storeID });
+        if (orders.length === 1) {
+            const Notifcation = {
+                recipientid: orderdetails.userid,
+                message: `Congratulations! You have placed your first order with us. Order ID: ${savedOrder._id}`,
+                type: 'Growth',
+                data: { orderId: savedOrder._id },
+                storeID: orderdetails.storeID
+            };
+            const notificationCreated = new notificationModel(Notifcation);
+            await notificationCreated.save();
+        }
+       else if (orders.length === 5) {
+            const Notifcation = {
+                recipientid: orderdetails.userid,
+                message: `Great job! You've reached a milestone by placing 5 orders with us. Keep up the momentum and continue enjoying our products!`,
+                type: 'Growth',
+                data: {},
+            storeID: orderdetails.storeID,
+            };
+            const notificationCreated = new notificationModel(Notifcation);
+            await notificationCreated.save();
+        }
+        else if (orders.length === 10) {
+            const Notifcation = {
+                recipientid: orderdetails.userid,
+                message: `Fantastic! You've achieved a significant milestone by placing 10 orders with us. Your dedication and loyalty are paying off. Keep up the great work!`,
+                type: 'Growth',
+                data: {},
+            storeID: orderdetails.storeID,
+            };
+            const notificationCreated = new notificationModel(Notifcation);
+            await notificationCreated.save();
+        }
+        else if (orders.length === 20) {
+            const Notifcation = {
+                recipientid: orderdetails.userid,
+                message: `Amazing! You've reached an impressive milestone by placing 20 orders with us. Your commitment to our products and services is truly commendable. Keep pushing forward and enjoying our offerings!`,
+                type: 'Growth',
+                data: {},
+            storeID: orderdetails.storeID,
+            };
+            const notificationCreated = new notificationModel(Notifcation);
+            await notificationCreated.save();
+        }
+        else if (orders.length === 50) {
+            const Notifcation = {
+                recipientid: orderdetails.userid,
+                message: `Incredible! You've reached an extraordinary milestone by placing 50 orders with us. Your dedication, loyalty, and support have truly paid off. This achievement is a testament to your commitment to our products and services. Keep inspiring others and enjoying our offerings!`,
+                type: 'Growth',
+                data: {},
+            storeID: orderdetails.storeID,
+            };
+            const notificationCreated = new notificationModel(Notifcation);
+            await notificationCreated.save();
+        }
+
+
+        // global.io.to(global.userSockets.get(orderdetails.userid)).emit('newOrderCreated', { notification: notificationCreated, order: savedOrder });
+        const CreateCustomer = {
+            uid: orderdetails.userid,
+            name: orderdetails.shippingAddress.fullName,
+            email: orderdetails.email,
+            city: orderdetails.shippingAddress.city,
+            phoneNumber: orderdetails.phoneNumber,
+            totalOrders: 1,
+            storeID: orderdetails.storeID,
+        }
+        const customerExists = await customermodel.findOne({ uid: orderdetails.userid, storeID: orderdetails.storeID });
+        if (!customerExists) {
+            const newCustomer = new customermodel(CreateCustomer);
+            await newCustomer.save();
+        } else {
+            await customermodel.updateOne({ uid: orderdetails.userid, storeID: orderdetails.storeID }, { $inc: { totalOrders: 1 } });
+        }
+        
         const storeOwnerEmail =  await authModel.findById(orderdetails.storeID).select('email');
         console.log("Store Owner Email:", storeOwnerEmail.email);
         const emailSubject = 'New Order Placed';
