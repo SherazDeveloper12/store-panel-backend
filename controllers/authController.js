@@ -292,6 +292,12 @@ const updateUserProfile = async (req, res) => {
     }
     const userId = decoded._id;
     const updates = req.body;
+   
+    if( updates.storePaymentMethods ) {
+
+       console.log("Updates received are payment methods");
+    }
+
     const userToBeUpdate = await authModel.findById(userId);
     if (!userToBeUpdate) {
       return res.status(404).json({ success: false, message: 'User not found' });
