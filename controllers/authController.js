@@ -328,9 +328,28 @@ const storePaymentMethods = async (req, res) => {
      res.status(500).json({ success: false, message: 'Error retrieving payment methods', error: error.message });
   }
 }
+const deliveryCharges = async (req, res) => {
+  try {
+    const { storeID } = req.params;
+    if (!storeID) {
+      return res.status(400).json({ success: false, message: 'Store ID is required' });
+    }
+    console.log("Fetching delivery charges for storeID:", storeID);
+    const user = await authModel.findOne({ storeID });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    const storeDeliveryCharges = user.storeDeliveryCharges;
+    res.status(200).json({ success: true, storeDeliveryCharges, message: 'Delivery charges retrieved successfully' });
+  }
+  catch (error) {
+    res.status(500).json({ success: false, message: 'Error retrieving delivery charges', error: error.message });
+  }
+}
 module.exports = {
   registerUser,
   storePaymentMethods,
+  deliveryCharges,
   sendOtp,
   verifyOtp,
   loginUser,
