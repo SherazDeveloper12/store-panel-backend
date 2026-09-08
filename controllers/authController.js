@@ -310,9 +310,27 @@ const updateUserProfile = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error updating user profile', error: error.message });
   }
 }
-
+const storePaymentMethods = async (req, res) => {
+  try{
+    const { storeID } = req.params;
+    if (!storeID) {
+      return res.status(400).json({ success: false, message: 'Store ID is required' });
+    }
+    console.log("Fetching payment methods for storeID:", storeID);
+    const user = await authModel.findOne({ storeID });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    const paymentMethods = user.storePaymentMethods.filter(method => method.enabled);
+    res.status(200).json({ success: true, paymentMethods, message: 'Payment methods retrieved successfully' });
+  }
+  catch (error) {
+     res.status(500).json({ success: false, message: 'Error retrieving payment methods', error: error.message });
+  }
+}
 module.exports = {
   registerUser,
+  storePaymentMethods,
   sendOtp,
   verifyOtp,
   loginUser,

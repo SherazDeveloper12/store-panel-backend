@@ -24,9 +24,11 @@ const orderSchema = new mongoose.Schema({
     },
     phoneNumber: { type: String, required: true },
     email: { type: String, required: true },
-    paymentMethod: { type: String, enum: ['COD', 'Pay Now', 'PayPal'], default: 'COD' },
+
     status: { type: String, enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'], default: 'Pending' },
     deliveryCharges: { type: Number, required: true },
+    paymentMethod: { type: String, enum: ['cod', 'easypaisa', 'jazzcash', 'bank_transfer'], required: true },
+    PaymentReceipt: { type: String, required: function () { return this.paymentMethod !== 'cod'; } },
     couponCode: { type: String, default: null },
     couponApplied: { type: Boolean, default: false },
     couponId: { type: String, ref: 'Coupon', default: null },

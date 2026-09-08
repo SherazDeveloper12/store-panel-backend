@@ -16,6 +16,7 @@ const productSchema = new mongoose.Schema({
     inStock: { type: Boolean, default: true },
     quantity: { type: Number, default: 0 },
     discount: { type: Number, default: 0 },
+    payableAmount: { type: Number, required: true },
     storeID: { type: mongoose.Schema.Types.ObjectId, ref: 'Store', required: true }
 
 });

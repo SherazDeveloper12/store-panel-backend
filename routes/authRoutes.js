@@ -1,7 +1,7 @@
 const express = require('express');
 const authRouter = express.Router();
 const verifyToken = require('../middlewares/verifytoken');
-const { registerUser, loginUser, getUserProfile, updateUserProfile , getAllUsers, sendOtp, verifyOtp, logoutUser} = require('../controllers/authController');
+const { registerUser, loginUser,storePaymentMethods, getUserProfile, updateUserProfile , getAllUsers, sendOtp, verifyOtp, logoutUser} = require('../controllers/authController');
 // Route to register a new user
 authRouter.post('/register', registerUser);
 // Route to send an OTP for verification
@@ -18,4 +18,6 @@ authRouter.get('/profile', verifyToken, getUserProfile);
 authRouter.put('/update', verifyToken, updateUserProfile);
 // Route to get all users (admin only)
 authRouter.get('/users', verifyToken, getAllUsers); 
+// route to get user storepayment methods
+authRouter.get('/storepaymentmethods/:storeID', storePaymentMethods);
 module.exports = authRouter;
