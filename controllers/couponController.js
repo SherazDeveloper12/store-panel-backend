@@ -95,7 +95,8 @@ const getAllcoupons = async (req, res) => {
 const validateCoupon = async (req, res) => {
     try {
         const { couponCode } = req.body;
-        const coupon = await couponModel.findOne({ code: couponCode });
+        console.log("Validating coupon with code:", couponCode);
+        const coupon = await couponModel.findOne({  couponCode });
         if (!coupon) {
             return res.status(404).json({success: false, message: 'Coupon not found' });
         }
@@ -108,10 +109,15 @@ const validateCoupon = async (req, res) => {
         if (!coupon.isActive) {
             return res.status(400).json({success: false, message: 'Coupon is not active' });
         }
-        if (coupon.storeID !== req.body.storeID) {
+        console.log("Coupon storeID:", coupon.storeID, "Request storeID:", req.body.storeID);
+        if (!coupon.storeID.equals(req.body.storeID)) {
             return res.status(400).json({success: false, message: 'Coupon is not valid for this store' });
         }
-       
+        console.log("Coupon code from DB:", coupon.couponCode, "type of DB code:", typeof coupon.couponCode);
+        console.log("Coupon code from request:", couponCode, "type of request code:", typeof couponCode);
+       if(coupon.couponCode !== couponCode){
+        return res.status(400).json({success: false, message: 'Coupon code does not match' });
+       }
 
         res.status(200).json({ success: true, message: 'Coupon is valid',  discount: coupon.discountPercentage });
     }
