@@ -5,13 +5,26 @@ const authModel = require('../models/authmodel');
 const { sendEmail } = require('../services/emailSender');
 const customermodel = require('../models/customermodel');
 var jwt = require('jsonwebtoken');
+const couponModel = require('../models/couponModel');
 const createOrder = async (req, res) => {
     try {
+
         const orderdetails = req.body;
-        const products = await productModel.find()
-        const totalProductsCost = orderdetails.items.reduce((total, item) => (total + (products.find(product => product._id.toString() === item.product._id).price) * item.quantity), 0);
-        const deliveryCharges = 200;
-        const order = {
+        console.log("orderdetails", orderdetails);
+        const storeID = orderdetails.storeID;
+        if (!storeID) {
+            return res.status(400).json({ status: "Failed", message: "Store ID is required" });
+        }
+        const user = await authModel.findById(storeID);
+        if (!user) {
+            return res.status(404).json({ status: "Failed", message: "Store not found" });
+        }
+        if (orderdetails.paymentMethod !== "cod" && !orderdetails.paymentReceipt) {
+            return res.status(400).json({ status: "Failed", message: "Payment receipt is required for non-COD payment methods" });
+        }
+        const deliveryCharges = user.storeDeliveryCharges;
+
+        let oldOrder = {
             username: orderdetails.username,
             customerId: orderdetails.userid,
             items: orderdetails.items,
@@ -19,15 +32,67 @@ const createOrder = async (req, res) => {
             billingAddress: orderdetails.billingAddress,
             phoneNumber: orderdetails.phoneNumber,
             email: orderdetails.email,
-            paymentMethod: orderdetails.paymentMethod,
             status: orderdetails.status,
             deliveryCharges: deliveryCharges,
-            payableAmount: totalProductsCost + deliveryCharges,
+            payableAmount: 0,
             orderDate: orderdetails.orderDate,
             storeID: orderdetails.storeID,
+            couponCode: orderdetails.couponCode,
+            couponApplied: false,
+            couponDiscount: null,
+            paymentMethod: orderdetails.paymentMethod,
         }
 
-        const orderCreated = new orderModel(order);
+        let couponDiscount = null;
+        const couponCode = orderdetails.couponCode;
+        console.log("couponCode", couponCode);
+        if (couponCode) {
+
+            const coupons = await couponModel.find({ storeID: storeID });
+            console.log("coupons", coupons);
+            const coupon = coupons.find(coupon => coupon.couponCode === couponCode);
+            if (!coupon) {
+                console.log("Invalid coupon code");
+                return res.status(400).json({ status: "Failed", message: "Invalid coupon code" });
+            }
+            else if (coupon.expirationDate < new Date()) {
+                console.log("Coupon has expired");
+                return res.status(400).json({ success: false, message: 'Coupon has expired' });
+            }
+            else if (coupon.usageCount === coupon.maxUsage) {
+                console.log("Coupon usage limit reached");
+                return res.status(400).json({ success: false, message: 'Coupon usage limit reached' });
+            }
+            else if (!coupon.isActive) {
+                console.log("Coupon is not active");
+                return res.status(400).json({ success: false, message: 'Coupon is not active' });
+            }
+            else {
+                couponDiscount = coupon.discountPercentage;
+                oldOrder.couponDiscount = couponDiscount;
+                oldOrder.couponApplied = true;
+                coupon.usedtimes += 1;
+                coupon.updatedAt = new Date();
+                coupon.status = coupon.usedtimes >= coupon.maxUsage ? 'used' : coupon.status;
+                console.log("Updated Coupon", coupon);
+                await coupon.save();
+            }
+
+        }
+
+        const products = await productModel.find()
+        const totalProductsCost = orderdetails.items.reduce((total, item) => (total + (products.find(product => product._id.toString() === item.product._id).price) * item.quantity), 0);
+        oldOrder.payableAmount = totalProductsCost + deliveryCharges;
+        if (couponDiscount) {
+            oldOrder.payableAmount = Math.round(totalProductsCost + deliveryCharges - (totalProductsCost * couponDiscount / 100));
+        }
+
+        if (orderdetails.paymentMethod !== "cod") {
+            oldOrder = { ...oldOrder, paymentReceipt: orderdetails.paymentReceipt };
+        }
+        console.log("oldOrder", oldOrder);
+
+        const orderCreated = new orderModel(oldOrder);
         const savedOrder = await orderCreated.save();
         const storeOwner = await authModel.findById(orderdetails.storeID);
         const notification = {
@@ -53,13 +118,13 @@ const createOrder = async (req, res) => {
             const notificationCreated = new notificationModel(Notifcation);
             await notificationCreated.save();
         }
-       else if (orders.length === 5) {
+        else if (orders.length === 5) {
             const Notifcation = {
                 recipientid: orderdetails.userid,
                 message: `Great job! You've reached a milestone by placing 5 orders with us. Keep up the momentum and continue enjoying our products!`,
                 type: 'Growth',
                 data: {},
-            storeID: orderdetails.storeID,
+                storeID: orderdetails.storeID,
             };
             const notificationCreated = new notificationModel(Notifcation);
             await notificationCreated.save();
@@ -70,7 +135,7 @@ const createOrder = async (req, res) => {
                 message: `Fantastic! You've achieved a significant milestone by placing 10 orders with us. Your dedication and loyalty are paying off. Keep up the great work!`,
                 type: 'Growth',
                 data: {},
-            storeID: orderdetails.storeID,
+                storeID: orderdetails.storeID,
             };
             const notificationCreated = new notificationModel(Notifcation);
             await notificationCreated.save();
@@ -81,7 +146,7 @@ const createOrder = async (req, res) => {
                 message: `Amazing! You've reached an impressive milestone by placing 20 orders with us. Your commitment to our products and services is truly commendable. Keep pushing forward and enjoying our offerings!`,
                 type: 'Growth',
                 data: {},
-            storeID: orderdetails.storeID,
+                storeID: orderdetails.storeID,
             };
             const notificationCreated = new notificationModel(Notifcation);
             await notificationCreated.save();
@@ -92,7 +157,7 @@ const createOrder = async (req, res) => {
                 message: `Incredible! You've reached an extraordinary milestone by placing 50 orders with us. Your dedication, loyalty, and support have truly paid off. This achievement is a testament to your commitment to our products and services. Keep inspiring others and enjoying our offerings!`,
                 type: 'Growth',
                 data: {},
-            storeID: orderdetails.storeID,
+                storeID: orderdetails.storeID,
             };
             const notificationCreated = new notificationModel(Notifcation);
             await notificationCreated.save();
@@ -116,12 +181,12 @@ const createOrder = async (req, res) => {
         } else {
             await customermodel.updateOne({ uid: orderdetails.userid, storeID: orderdetails.storeID }, { $inc: { totalOrders: 1 } });
         }
-        
-        const storeOwnerEmail =  await authModel.findById(orderdetails.storeID).select('email');
+
+        const storeOwnerEmail = await authModel.findById(orderdetails.storeID).select('email');
         console.log("Store Owner Email:", storeOwnerEmail.email);
         const emailSubject = 'New Order Placed';
         const emailBody = `A new order has been placed by ${orderdetails.shippingAddress.fullName}. Order ID: ${savedOrder._id}. Please check your dashboard for more details.`;
-      
+
         await sendEmail(storeOwnerEmail.email, emailSubject, emailBody);
         // const adminNotification = {
         //     recipientid: "69843421d30a0ace506d9172",
@@ -196,7 +261,7 @@ const updateOrderStatus = async (req, res) => {
         console.log("Updating order status for order ID:", orderId);
         const { status } = req.body;
         const order = await orderModel.findById(orderId);
-        
+
         if (!order) {
             return res.status(404).json({ error: 'Order not found' });
         }
