@@ -278,8 +278,10 @@ const updateOrderStatus = async (req, res) => {
 
 const getOrdersByUserId = async (req, res) => {
     try {
-        const userId = req.params.userId;
-        const orders = await orderModel.find({ userId: userId });
+        
+        const customerId = req.params.userId;
+        console.log("Fetching orders for customer ID:", customerId);
+        const orders = await orderModel.find({ customerId });
 
         res.status(200).json({ status: "Success", orders, message: "Orders fetched successfully" });
     } catch (error) {

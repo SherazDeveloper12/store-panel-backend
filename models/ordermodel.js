@@ -25,7 +25,7 @@ const orderSchema = new mongoose.Schema({
     phoneNumber: { type: String, required: true },
     email: { type: String, required: true },
 
-    status: { type: String, enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'], default: 'Pending' },
+    status: { type: String, enum: ['Pending','Rejected', 'Processing', 'Shipped', 'Delivered', 'Cancelled'], default: 'Pending' },
     deliveryCharges: { type: Number, required: true },
     paymentMethod: { type: String, enum: ['cod', 'easypaisa', 'jazzcash', 'bank_transfer'], required: true },
     paymentReceipt: { type: String, required: function () { return this.paymentMethod !== 'cod'; } },
