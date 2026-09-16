@@ -13,6 +13,7 @@ const createProduct = async (req, res) => {
             res.clearCookie('token');
             return res.status(401).json({ message: 'Unauthorized, Please Login Again' });
         }
+        console.log('Creating product with data:', req.body);
         const product = new productModel({ ...req.body, storeID });
         
         const savedProduct = await product.save();
