@@ -21,7 +21,7 @@ dotenv.config();
 
 app.use(cors(
     {
-        origin : ['http://localhost:3000', 'https://genz-fragrance.vercel.app', 'http://localhost:3001', 'https://storepannel-j4f6rlayr-sheraz-qaisrzais-projects.vercel.app/'],
+        origin : ['https://storepannel.vercel.app/', 'https://genz-fragrance.vercel.app', 'http://localhost:3001', 'https://storepannel-j4f6rlayr-sheraz-qaisrzais-projects.vercel.app/'],
         credentials : true,
     }
 ));
