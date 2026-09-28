@@ -81,7 +81,7 @@ const createOrder = async (req, res) => {
         }
 
         const products = await productModel.find()
-        const totalProductsCost = orderdetails.items.reduce((total, item) => (total + (products.find(product => product._id.toString() === item.product._id).price) * item.quantity), 0);
+        const totalProductsCost = orderdetails.items.reduce((total, item) => (total + (products.find(product => product._id.toString() === item.product._id).payableAmount) * item.quantity), 0);
         oldOrder.payableAmount = totalProductsCost + deliveryCharges;
         if (couponDiscount) {
             oldOrder.payableAmount = Math.round(totalProductsCost + deliveryCharges - (totalProductsCost * couponDiscount / 100));
@@ -236,7 +236,9 @@ const getOrderById = async (req, res) => {
     }
 }
 const getAllOrders = async (req, res) => {
-    const token = req.cookies.token;
+   
+    try {
+         const token = req.cookies.token;
     if (!token) {
         return res.status(401).json({ message: 'Unauthorized', success: false });
     }
@@ -245,8 +247,9 @@ const getAllOrders = async (req, res) => {
         return res.status(401).json({ message: 'Unauthorized', success: false });
     }
     const storeID = decoded.storeID;
-    try {
+   console.log("type of storeID:", typeof storeID);
         const orders = await orderModel.find({ storeID: storeID });
+         console.log("Fetching all orders for store ID:", orders);
         res.status(200).json({ success: true, message: "Orders fetched successfully", orders });
     } catch (error) {
         console.error(error);
