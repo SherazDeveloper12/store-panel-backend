@@ -6,7 +6,7 @@ const {
    validateCoupon,
    getAllcoupons,
    getcouponById
-} = require('../controllers/CouponController');
+} = require('../controllers/couponController');
 
 couponRouter.get('/', getAllcoupons);
 couponRouter.post('/create', verifyToken, createcoupon);
