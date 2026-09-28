@@ -21,8 +21,8 @@ dotenv.config();
 
 app.use(cors(
     {
-        origin : ['https://storepannel.vercel.app/', 'https://genz-fragrance.vercel.app', 'http://localhost:3001', 'https://storepannel-j4f6rlayr-sheraz-qaisrzais-projects.vercel.app/'],
-        credentials : true,
+        origin: true,
+        credentials: true,
     }
 ));
 app.use(cookieParser());
@@ -48,6 +48,6 @@ app.use('/coupons', couponRouter);
 app.use('/customers', customerRouter);
 app.use('/notifications', notificationRouter);
 
- server.listen(port, ()=>{
-        console.log(`Server is running on port ${port}`);
-    })
+server.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+})
