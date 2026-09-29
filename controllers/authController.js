@@ -222,8 +222,9 @@ const verifyOtp = async (req, res) => {
   }
 }
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
   try {
+    console.log("Logging in user with data:", req.body);
+    const { email, password } = req.body;
     const users = await authModel.find();
     const user = users.find(user => user.email === email);
     if (!user) {
